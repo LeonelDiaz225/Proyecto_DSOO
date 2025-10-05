@@ -17,7 +17,7 @@ namespace Proyecto_Integrador.Datos
         private string clave;
 
         // Constructor con parámetros de conexión
-        public Conexion(string servidor = "localhost", string baseDatos = "", string puerto = "3306", string usuario = "root", string clave = "")
+        public Conexion(string servidor = "localhost", string baseDatos = "proyecto", string puerto = "3307", string usuario = "root", string clave = "")
         {
             this.servidor = servidor;
             this.baseDatos = baseDatos;
