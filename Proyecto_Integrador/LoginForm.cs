@@ -22,8 +22,7 @@ namespace Proyecto_Integrador
                 return;
             }
 
-            // Validación simple sin base de datos por ahora
-            if (usuario == "admin" && contraseña == "123")
+            if (ValidarCredenciales(usuario, contraseña))
             {
                 MessageBox.Show("¡Bienvenido al sistema!", "Login exitoso", 
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -37,6 +36,51 @@ namespace Proyecto_Integrador
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 txtContraseña.Clear();
                 txtUsuario.Focus();
+            }
+        }
+
+        private bool ValidarCredenciales(string usuario, string contraseña)
+        {
+            try
+            {
+                // Crear conexión usando la clase Conexion
+                Conexion conexionDB = new Conexion();
+
+                // Primero probamos la conexión
+                if (!conexionDB.ProbarConexion())
+                {
+                    MessageBox.Show("No se puede conectar a la base de datos", "Error de conexión", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+
+                using (MySqlConnection conexion = conexionDB.ObtenerConexion())
+                {
+                    conexion.Open();
+                    
+                    // Query actualizado para tu estructura de tabla
+                    string query = "SELECT COUNT(*) FROM usuarios WHERE usuario = @usuario AND contraseña = @contraseña";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conexion))
+                    {
+                        cmd.Parameters.AddWithValue("@usuario", usuario);
+                        cmd.Parameters.AddWithValue("@contraseña", contraseña);
+                        
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
+                        return count > 0;
+                    }
+                }
+            }
+            catch (MySqlException mysqlEx)
+            {
+                MessageBox.Show($"Error de base de datos: {mysqlEx.Message}", "Error MySQL", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error inesperado: {ex.Message}", "Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
             }
         }
 
