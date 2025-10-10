@@ -22,9 +22,11 @@ namespace Proyecto_Integrador
                 return;
             }
 
-            if (ValidarCredenciales(usuario, contraseña))
+            var (esValido, rol) = ValidarCredencialesConSP(usuario, contraseña);
+            
+            if (esValido)
             {
-                MessageBox.Show("¡Bienvenido al sistema!", "Login exitoso", 
+                MessageBox.Show($"¡Bienvenido al sistema!\nRol: {rol}", "Login exitoso", 
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 
                 this.DialogResult = DialogResult.OK;
@@ -39,7 +41,7 @@ namespace Proyecto_Integrador
             }
         }
 
-        private bool ValidarCredenciales(string usuario, string contraseña)
+        private (bool esValido, string rol) ValidarCredencialesConSP(string usuario, string contraseña)
         {
             try
             {
@@ -51,22 +53,43 @@ namespace Proyecto_Integrador
                 {
                     MessageBox.Show("No se puede conectar a la base de datos", "Error de conexión", 
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return false;
+                    return (false, "");
                 }
 
                 using (MySqlConnection conexion = conexionDB.ObtenerConexion())
                 {
                     conexion.Open();
                     
-                    // Query actualizado para tu estructura de tabla
-                    string query = "SELECT COUNT(*) FROM usuarios WHERE usuario = @usuario AND contraseña = @contraseña";
-                    using (MySqlCommand cmd = new MySqlCommand(query, conexion))
+                    using (MySqlCommand cmd = new MySqlCommand("ValidarUsuario", conexion))
                     {
-                        cmd.Parameters.AddWithValue("@usuario", usuario);
-                        cmd.Parameters.AddWithValue("@contraseña", contraseña);
+                        // Configurar como stored procedure
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
                         
-                        int count = Convert.ToInt32(cmd.ExecuteScalar());
-                        return count > 0;
+                        // Parámetros de entrada
+                        cmd.Parameters.AddWithValue("@p_usuario", usuario);
+                        cmd.Parameters.AddWithValue("@p_contraseña", contraseña);
+                        
+                        // Parámetros de salida
+                        MySqlParameter paramResultado = new MySqlParameter("@p_resultado", MySqlDbType.Int32)
+                        {
+                            Direction = System.Data.ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(paramResultado);
+                        
+                        MySqlParameter paramRol = new MySqlParameter("@p_rol", MySqlDbType.VarChar, 100)
+                        {
+                            Direction = System.Data.ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(paramRol);
+                        
+                        // Ejecutar el stored procedure
+                        cmd.ExecuteNonQuery();
+                        
+                        // Obtener los valores de salida
+                        int resultado = Convert.ToInt32(paramResultado.Value ?? 0);
+                        string rol = paramRol.Value?.ToString() ?? "";
+                        
+                        return (resultado > 0, rol);
                     }
                 }
             }
@@ -74,13 +97,13 @@ namespace Proyecto_Integrador
             {
                 MessageBox.Show($"Error de base de datos: {mysqlEx.Message}", "Error MySQL", 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
+                return (false, "");
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error inesperado: {ex.Message}", "Error", 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
+                return (false, "");
             }
         }
 

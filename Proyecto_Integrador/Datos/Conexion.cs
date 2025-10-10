@@ -54,32 +54,27 @@ namespace Proyecto_Integrador.Datos
                 return false;
             }
         }
-
         // Propiedades para acceder a los parámetros de conexión
         public string Servidor
         {
             get => servidor;
             set => servidor = value;
         }
-
         public string BaseDatos
         {
             get => baseDatos;
             set => baseDatos = value;
         }
-
         public string Puerto
         {
             get => puerto;
             set => puerto = value;
         }
-
         public string Usuario
         {
             get => usuario;
             set => usuario = value;
         }
-
         public string Clave
         {
             get => clave;
